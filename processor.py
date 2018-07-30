@@ -13,7 +13,7 @@ class Processor:
         raise NotImplementedError
 
     def flow(self, ress):
-        """ Pipes list of resources from one processor into another """
+        """ Run transformation on for each resource """
         for res in ress:
             yield from self.run(res)
 
@@ -27,6 +27,7 @@ class Pipe(Processor):
         self.processors = processors
 
     def run(self, res):
+        """ Pipes list of resources from one processor into another """
         results = [res]
         for p in self.processors:
             results = p.flow(results)
