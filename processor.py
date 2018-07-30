@@ -1,14 +1,21 @@
 import requests
-from collections import namedtuple
+from requests.utils import urlparse
+from recordclass import recordclass
 
 
-Resource = namedtuple('Resource', ['request', 'response'])
+Resource = recordclass('Resource', ['request', 'response', 'session'])
 
 
 class Processor:
 
     def run(self, res):
+        """ Takes single resource and returns multiple resources """
         raise NotImplementedError
+
+    def flow(self, ress):
+        """ Pipes list of resources from one processor into another """
+        for res in ress:
+            yield from self.run(res)
 
     def __or__(self, other):
         return Pipe([self, other])
@@ -20,16 +27,18 @@ class Pipe(Processor):
         self.processors = processors
 
     def run(self, res):
-        result = res
+        results = [res]
         for p in self.processors:
-            result = p.run(result)
-        return result
+            results = p.flow(results)
+        return results
 
 
 class Download(Processor):
 
     def run(self, res):
-        return Resource(res.request, requests.get(res.request))
+        rq, ss = res.request, res.session
+        res.response = ss.send(ss.prepare_request(rq))
+        yield res
 
 
 class Store(Processor):
@@ -40,7 +49,16 @@ class Store(Processor):
     def run(self, res):
         with open(self.storage, 'w') as f:
             f.write(res.response.text)
-        return res
+        yield res
+
+
+class UrlStampedStorage(Processor):
+
+    def run(self, res):
+        scheme, netloc, path, params, query, fragment = urlparse(res.request.url)
+        with open(netloc, 'w') as f:
+            f.write(res.response.text)
+        yield res
 
 
 class Map(Processor):
@@ -55,6 +73,9 @@ class Map(Processor):
 
 class Filter(Processor):
 
+    def __init__(self, f):
+        self.f = f
+
     def run(self, res):
         pass
 
@@ -66,5 +87,13 @@ class PDF(Processor):
 
 
 if __name__ == "__main__":
-    download_and_store = Download() | Store("data.txt")
-    print(download_and_store.run(Resource("http://example.com", None)))
+    example = Resource(requests.Request("GET", "http://example.com"),
+                       None,
+                       requests.Session())
+    ikon = Resource(requests.Request("GET", "http://ikon.mn"),
+                    None,
+                    requests.Session())
+    initials = [example, ikon]
+    download_and_store = Download() | UrlStampedStorage()
+    results = download_and_store.flow(initials)
+    print(list(results))
