@@ -1,7 +1,7 @@
 import requests
 from requests.utils import urlparse
 
-from processors.base import Processor
+from .base import Processor
 
 
 class Store(Processor):

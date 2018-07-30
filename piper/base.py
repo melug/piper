@@ -36,10 +36,13 @@ class Pipe(Processor):
 
 class Download(Processor):
 
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
+
     def run(self, res):
         rq, ss = res.request, res.session
         logging.info(f"Checking url: {rq.url}")
-        res.response = ss.send(ss.prepare_request(rq), allow_redirects=True)
+        res.response = ss.send(ss.prepare_request(rq), **self.kwargs)
         yield res
 
 
