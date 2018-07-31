@@ -3,7 +3,7 @@ import logging
 from recordclass import recordclass
 
 
-Resource = recordclass('Resource', ['request', 'response', 'session'])
+Resource = recordclass('Resource', ['request', 'response', 'session', 'meta'])
 
 
 class Processor:
