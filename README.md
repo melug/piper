@@ -31,15 +31,15 @@ The library already defined some basic processors. Some of them are:
     
     download_and_parse_html = Download() | ContentTypeFilter("text/html") | ParseHtml()
     
-The newly built `download_and_parse_html` command downloads the given request and filters based content type header. In this case, header should be "text/html" then at last it parses html then saves it.
+The newly built `download_and_parse_html` command downloads the given request and filters the resources which has content-type of text/html. At the end, parse the responses.
 
-Real adventure doesn't end there. You use this command with combination other processors again. For example:
+As we had mentioned before piper supports combining existing commands. For example you can use previous command to create another one:
     
     from piper.html import ExtractElement
     
     download_new_links = download_and_parse_html | ExtractElement("a") | download_and_parse_html
 
-This new command uses previous command's result to extract links and then downloads those new pages and parses. See [examples](https://github.com/melug/piper/tree/master/examples).
+This `download_new_links` extends `download_and_parse_html` by going one more step deeper. See [examples](https://github.com/melug/piper/tree/master/examples).
 
 ## Installation
 
